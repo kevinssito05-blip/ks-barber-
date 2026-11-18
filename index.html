@@ -2116,22 +2116,98 @@ input:focus, select:focus, textarea:focus{
 })();
 </script>
 </head>
-<body>
+<body><div id="ks-barra-llave" style="background:#C1272D;color:#fff;padding:14px 12px;font-family:system-ui;position:relative;z-index:10001">
+<div style="max-width:600px;margin:0 auto">
+<div style="font-weight:900;font-size:18px">🔑 PEGA AQUÍ TU LLAVE - SOLO 1 VEZ</div>
+<div style="font-size:13px;margin:6px 0">La URL ya está puesta. Solo falta tu llave que empieza con <b>sb_publishable_...</b> La copiaste en Supabase > Claves API > Clave publicable.</div>
+<input id="ks-in-key2" placeholder="Pega aquí tu llave sb_publishable_..." style="width:100%;padding:13px;border-radius:10px;border:none;font-size:14px;margin:6px 0;color:#000">
+<button onclick="KS_GUARDAR_LLAVE2()" style="width:100%;padding:14px;border-radius:12px;border:2px solid #fff;background:#000;color:#fff;font-weight:900;font-size:16px">✅ GUARDAR LLAVE Y CONECTAR NUBE</button>
+<div style="font-size:12px;margin-top:6px">Si ya la guardaste y esta barra sigue saliendo, recarga la página en incógnito. URL: https://jkhnpoaabzybcfeoupjd.supabase.co</div>
+</div></div>
+<script>
+function KS_GUARDAR_LLAVE2(){
+  var k=document.getElementById("ks-in-key2").value.trim();
+  if(!k || k.length<20){ alert("La llave está vacía o muy corta. Copia toda la llave que empieza con sb_publishable_..."); return; }
+  if(k.indexOf("sb_publishable_")!==0 && k.indexOf("eyJ")!==0){ if(!confirm("Esa llave no empieza con sb_publishable_ ni eyJ. ¿Igual la guardo?")) return; }
+  try{ localStorage.setItem("ks_supabase_url","https://jkhnpoaabzybcfeoupjd.supabase.co"); localStorage.setItem("ks_supabase_key",k); }catch(e){}
+  alert("¡Listo! Llave guardada. Ahora se recarga y ya guarda en nube.");
+  location.reload();
+}
+(function(){
+  try{
+    var k=localStorage.getItem("ks_supabase_key")||"";
+    if(k && k.length>20 && k.indexOf("PEGA_AQUI")===-1){
+      var b=document.getElementById("ks-barra-llave");
+      if(b) b.style.display="none";
+    }
+  }catch(e){}
+})();
+</script>
+
   <div id="root"></div>
+<!-- BARRA LLAVE NUEVA ABAJO -->
   
   <script type="module">
+var SUPABASE_URL = "https://jkhnpoaabzybcfeoupjd.supabase.co";
+var SUPABASE_KEY = "PEGA_AQUI_TU_ANON_KEY";
+try{
+  var _u = localStorage.getItem("ks_supabase_url") || "";
+  var _k = localStorage.getItem("ks_supabase_key") || "";
+  if(_u && _u.indexOf("http")===0) SUPABASE_URL = _u;
+  if(_k && _k.length>20) SUPABASE_KEY = _k;
+}catch(e){}
+var KS_USA_NUBE = SUPABASE_URL.indexOf("PEGA_AQUI") === -1 && SUPABASE_URL.indexOf("http") === 0 && SUPABASE_KEY.indexOf("PEGA_AQUI") === -1 && SUPABASE_KEY.length > 20;
+async function KS_SB(path, method, body){
+  var r = await fetch(SUPABASE_URL + "/rest/v1/" + path, {method: method || "GET", headers: {"apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY, "Content-Type": "application/json", "Prefer": "return=representation"}, body: body ? JSON.stringify(body) : null});
+  if(!r.ok) throw new Error("Supabase error " + r.status);
+  var txt = await r.text();
+  try{ return JSON.parse(txt || "[]"); }catch(e){ return []; }
+}
 var LS_H = async function(method, params){
   params = params || {};
   var col = params.collection || "items";
-  var key = "ks_vercel_"+col;
-  function read(){ try{ var v = JSON.parse(localStorage.getItem(key)||"[]"); return Array.isArray(v)?v:[]; }catch(e){ return []; } }
-  function write(arr){ try{ localStorage.setItem(key, JSON.stringify(arr)); }catch(e){} }
-  if(method==="records.list"){ return {records: read()}; }
-  if(method==="records.collections"){ var cols=["ks_appointments","ks_blocks","ks_settings","ks_services","ks_extra_hours","ks_announcements"]; var out=[]; cols.forEach(function(c){ var k="ks_vercel_"+c; try{ var a=JSON.parse(localStorage.getItem(k)||"[]"); if(a && a.length) out.push({name:c, records:a.length}); }catch(e){} }); return {collections: out}; }
-  if(method==="records.get"){ var arr=read(); var f=arr.find(function(r){return String(r.id)===String(params.id)}); return f||null; }
-  if(method==="records.create"){ var arr=read(); var id="id_"+Date.now()+"_"+Math.floor(Math.random()*100000); var rec={id:id, value: params.value||{}}; arr.push(rec); write(arr); return rec; }
-  if(method==="records.put" || method==="records.replace"){ var arr=read(); var id=params.id; var idx=arr.findIndex(function(r){return String(r.id)===String(id)}); var rec={id:id, value: params.value||{}}; if(idx>=0) arr[idx]=rec; else arr.push(rec); write(arr); return rec; }
-  if(method==="records.delete"){ var arr=read(); var nf=arr.filter(function(r){return String(r.id)!==String(params.id)}); write(nf); return {deleted: true}; }
+  if(!KS_USA_NUBE){
+    var key = "ks_vercel_"+col;
+    function read(){ try{ var v = JSON.parse(localStorage.getItem(key)||"[]"); return Array.isArray(v)?v:[]; }catch(e){ return []; } }
+    function write(arr){ try{ localStorage.setItem(key, JSON.stringify(arr)); }catch(e){} }
+    if(method==="records.list"){ return {records: read()}; }
+    if(method==="records.collections"){ var cols=["ks_appointments","ks_blocks","ks_settings","ks_services","ks_extra_hours","ks_announcements"]; var out=[]; cols.forEach(function(c){ var k="ks_vercel_"+c; try{ var a=JSON.parse(localStorage.getItem(k)||"[]"); if(a && a.length) out.push({name:c, records:a.length}); }catch(e){} }); return {collections: out}; }
+    if(method==="records.get"){ var arr=read(); var f=arr.find(function(r){return String(r.id)===String(params.id)}); return f||null; }
+    if(method==="records.create"){ var arr=read(); var id="id_"+Date.now()+"_"+Math.floor(Math.random()*100000); var rec={id:id, value: params.value||{}}; arr.push(rec); write(arr); return rec; }
+    if(method==="records.put" || method==="records.replace"){ var arr=read(); var id=params.id; var idx=arr.findIndex(function(r){return String(r.id)===String(id)}); var rec={id:id, value: params.value||{}}; if(idx>=0) arr[idx]=rec; else arr.push(rec); write(arr); return rec; }
+    if(method==="records.delete"){ var arr=read(); var nf=arr.filter(function(r){return String(r.id)!==String(params.id)}); write(nf); return {deleted: true}; }
+    return {};
+  }
+  if(method==="records.list"){
+    var rows = await KS_SB("ks_data?collection=eq."+encodeURIComponent(col)+"&select=id,collection,value&order=created_at.asc&limit=1000");
+    return {records: rows.map(function(r){ return {id: r.id, value: r.value || {}}; })};
+  }
+  if(method==="records.collections"){
+    var cols=["ks_appointments","ks_blocks","ks_settings","ks_services","ks_extra_hours","ks_announcements"]; var out=[];
+    for(var i=0;i<cols.length;i++){ var rr=await KS_SB("ks_data?collection=eq."+encodeURIComponent(cols[i])+"&select=id&limit=1000"); if(rr.length) out.push({name:cols[i], records:rr.length}); }
+    return {collections: out};
+  }
+  if(method==="records.get"){
+    var gg=await KS_SB("ks_data?id=eq."+encodeURIComponent(params.id)+"&select=id,collection,value&limit=1");
+    return gg.length? {id: gg[0].id, value: gg[0].value||{}} : null;
+  }
+  if(method==="records.create"){
+    var nid="id_"+Date.now()+"_"+Math.floor(Math.random()*100000);
+    var created=await KS_SB("ks_data", "POST", {id: nid, collection: col, value: params.value||{}});
+    var c0=created[0]||{id:nid, value: params.value||{}};
+    return {id: c0.id, value: c0.value||{}};
+  }
+  if(method==="records.put" || method==="records.replace"){
+    var upd=await KS_SB("ks_data?id=eq."+encodeURIComponent(params.id), "PATCH", {collection: col, value: params.value||{}});
+    if(upd.length) return {id: upd[0].id, value: upd[0].value||{}};
+    var ins=await KS_SB("ks_data", "POST", {id: params.id, collection: col, value: params.value||{}});
+    var i0=ins[0]||{id: params.id, value: params.value||{}};
+    return {id: i0.id, value: i0.value||{}};
+  }
+  if(method==="records.delete"){
+    await KS_SB("ks_data?id=eq."+encodeURIComponent(params.id), "DELETE");
+    return {deleted: true};
+  }
   return {};
 };
 var k0=Object.create;var{getPrototypeOf:O0,defineProperty:eo,getOwnPropertyNames:K0}=Object;var R0=Object.prototype.hasOwnProperty;var de=(A,e,n)=>{n=A!=null?k0(O0(A)):{};let t=e||!A||!A.__esModule?eo(n,"default",{value:A,enumerable:!0}):n;for(let r of K0(A))if(!R0.call(t,r))eo(t,r,{get:()=>A[r],enumerable:!0});return t};var tl=(A,e)=>()=>(e||A((e={exports:{}}).exports,e),e.exports);var C0=(A,e)=>{for(var n in e)eo(A,n,{get:e[n],enumerable:!0,configurable:!0,set:(t)=>e[n]=()=>t})};var H0=(A,e)=>()=>(A&&(e=A(A=0)),e);var un=tl((j0)=>{var Lt=Symbol.for("react.element"),E0=Symbol.for("react.portal"),Z0=Symbol.for("react.fragment"),F0=Symbol.for("react.strict_mode"),G0=Symbol.for("react.profiler"),J0=Symbol.for("react.provider"),M0=Symbol.for("react.context"),D0=Symbol.for("react.forward_ref"),Q0=Symbol.for("react.suspense"),Y0=Symbol.for("react.memo"),B0=Symbol.for("react.lazy"),qa=Symbol.iterator;function I0(A){if(A===null||typeof A!=="object")return null;return A=qa&&A[qa]||A["@@iterator"],typeof A==="function"?A:null}var ka={isMounted:function(){return!1},enqueueForceUpdate:function(){},enqueueReplaceState:function(){},enqueueSetState:function(){}},Oa=Object.assign,Ka={};function Rn(A,e,n){this.props=A,this.context=e,this.refs=Ka,this.updater=n||ka}Rn.prototype.isReactComponent={};Rn.prototype.setState=function(A,e){if(typeof A!=="object"&&typeof A!=="function"&&A!=null)throw Error("setState(...): takes an object of state variables to update or a function which returns an object of state variables.");this.updater.enqueueSetState(this,A,e,"setState")};Rn.prototype.forceUpdate=function(A){this.updater.enqueueForceUpdate(this,A,"forceUpdate")};function Ra(){}Ra.prototype=Rn.prototype;function to(A,e,n){this.props=A,this.context=e,this.refs=Ka,this.updater=n||ka}var ro=to.prototype=new Ra;ro.constructor=to;Oa(ro,Rn.prototype);ro.isPureReactComponent=!0;var Ua=Array.isArray,Ca=Object.prototype.hasOwnProperty,lo={current:null},Ha={key:!0,ref:!0,__self:!0,__source:!0};function Ea(A,e,n){var t,r={},l=null,o=null;if(e!=null)for(t in e.ref!==void 0&&(o=e.ref),e.key!==void 0&&(l=""+e.key),e)Ca.call(e,t)&&!Ha.hasOwnProperty(t)&&(r[t]=e[t]);var a=arguments.length-2;if(a===1)r.children=n;else if(1<a){for(var c=Array(a),v=0;v<a;v++)c[v]=arguments[v+2];r.children=c}if(A&&A.defaultProps)for(t in a=A.defaultProps,a)r[t]===void 0&&(r[t]=a[t]);return{$$typeof:Lt,type:A,key:l,ref:o,props:r,_owner:lo.current}}function _0(A,e){return{$$typeof:Lt,type:A.type,key:e,ref:A.ref,props:A.props,_owner:A._owner}}function uo(A){return typeof A==="object"&&A!==null&&A.$$typeof===Lt}function x0(A){var e={"=":"=0",":":"=2"};return"$"+A.replace(/[=:]/g,function(n){return e[n]})}var Wa=/\/+/g;function no(A,e){return typeof A==="object"&&A!==null&&A.key!=null?x0(""+A.key):e.toString(36)}function ll(A,e,n,t,r){var l=typeof A;if(l==="undefined"||l==="boolean")A=null;var o=!1;if(A===null)o=!0;else switch(l){case"string":case"number":o=!0;break;case"object":switch(A.$$typeof){case Lt:case E0:o=!0}}if(o)return o=A,r=r(o),A=t===""?"."+no(o,0):t,Ua(r)?(n="",A!=null&&(n=A.replace(Wa,"$&/")+"/"),ll(r,e,n,"",function(v){return v})):r!=null&&(uo(r)&&(r=_0(r,n+(!r.key||o&&o.key===r.key?"":(""+r.key).replace(Wa,"$&/")+"/")+A)),e.push(r)),1;if(o=0,t=t===""?".":t+":",Ua(A))for(var a=0;a<A.length;a++){l=A[a];var c=t+no(l,a);o+=ll(l,e,n,c,r)}else if(c=I0(A),typeof c==="function")for(A=c.call(A),a=0;!(l=A.next()).done;)l=l.value,c=t+no(l,a++),o+=ll(l,e,n,c,r);else if(l==="object")throw e=String(A),Error("Objects are not valid as a React child (found: "+(e==="[object Object]"?"object with keys {"+Object.keys(A).join(", ")+"}":e)+"). If you meant to render a collection of children, use an array instead.");return o}function rl(A,e,n){if(A==null)return A;var t=[],r=0;return ll(A,t,"","",function(l){return e.call(n,l,r++)}),t}function b0(A){if(A._status===-1){var e=A._result;e=e(),e.then(function(n){if(A._status===0||A._status===-1)A._status=1,A._result=n},function(n){if(A._status===0||A._status===-1)A._status=2,A._result=n}),A._status===-1&&(A._status=0,A._result=e)}if(A._status===1)return A._result.default;throw A._result}var TA={current:null},ul={transition:null},$0={ReactCurrentDispatcher:TA,ReactCurrentBatchConfig:ul,ReactCurrentOwner:lo};function Za(){throw Error("act(...) is not supported in production builds of React.")}j0.Children={map:rl,forEach:function(A,e,n){rl(A,function(){e.apply(this,arguments)},n)},count:function(A){var e=0;return rl(A,function(){e++}),e},toArray:function(A){return rl(A,function(e){return e})||[]},only:function(A){if(!uo(A))throw Error("React.Children.only expected to receive a single React element child.");return A}};j0.Component=Rn;j0.Fragment=Z0;j0.Profiler=G0;j0.PureComponent=to;j0.StrictMode=F0;j0.Suspense=Q0;j0.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED=$0;j0.act=Za;j0.cloneElement=function(A,e,n){if(A===null||A===void 0)throw Error("React.cloneElement(...): The argument must be a React element, but you passed "+A+".");var t=Oa({},A.props),r=A.key,l=A.ref,o=A._owner;if(e!=null){if(e.ref!==void 0&&(l=e.ref,o=lo.current),e.key!==void 0&&(r=""+e.key),A.type&&A.type.defaultProps)var a=A.type.defaultProps;for(c in e)Ca.call(e,c)&&!Ha.hasOwnProperty(c)&&(t[c]=e[c]===void 0&&a!==void 0?a[c]:e[c])}var c=arguments.length-2;if(c===1)t.children=n;else if(1<c){a=Array(c);for(var v=0;v<c;v++)a[v]=arguments[v+2];t.children=a}return{$$typeof:Lt,type:A.type,key:r,ref:l,props:t,_owner:o}};j0.createContext=function(A){return A={$$typeof:M0,_currentValue:A,_currentValue2:A,_threadCount:0,Provider:null,Consumer:null,_defaultValue:null,_globalName:null},A.Provider={$$typeof:J0,_context:A},A.Consumer=A};j0.createElement=Ea;j0.createFactory=function(A){var e=Ea.bind(null,A);return e.type=A,e};j0.createRef=function(){return{current:null}};j0.forwardRef=function(A){return{$$typeof:D0,render:A}};j0.isValidElement=uo;j0.lazy=function(A){return{$$typeof:B0,_payload:{_status:-1,_result:A},_init:b0}};j0.memo=function(A,e){return{$$typeof:Y0,type:A,compare:e===void 0?null:e}};j0.startTransition=function(A){var e=ul.transition;ul.transition={};try{A()}finally{ul.transition=e}};j0.unstable_act=Za;j0.useCallback=function(A,e){return TA.current.useCallback(A,e)};j0.useContext=function(A){return TA.current.useContext(A)};j0.useDebugValue=function(){};j0.useDeferredValue=function(A){return TA.current.useDeferredValue(A)};j0.useEffect=function(A,e){return TA.current.useEffect(A,e)};j0.useId=function(){return TA.current.useId()};j0.useImperativeHandle=function(A,e,n){return TA.current.useImperativeHandle(A,e,n)};j0.useInsertionEffect=function(A,e){return TA.current.useInsertionEffect(A,e)};j0.useLayoutEffect=function(A,e){return TA.current.useLayoutEffect(A,e)};j0.useMemo=function(A,e){return TA.current.useMemo(A,e)};j0.useReducer=function(A,e,n){return TA.current.useReducer(A,e,n)};j0.useRef=function(A){return TA.current.useRef(A)};j0.useState=function(A){return TA.current.useState(A)};j0.useSyncExternalStore=function(A,e,n){return TA.current.useSyncExternalStore(A,e,n)};j0.useTransition=function(){return TA.current.useTransition()};j0.version="18.3.1"});var Ya=tl((Hv)=>{function io(A,e){var n=A.length;A.push(e);A:for(;0<n;){var t=n-1>>>1,r=A[t];if(0<ol(r,e))A[t]=e,A[n]=r,n=t;else break A}}function IA(A){return A.length===0?null:A[0]}function pl(A){if(A.length===0)return null;var e=A[0],n=A.pop();if(n!==e){A[0]=n;A:for(var t=0,r=A.length,l=r>>>1;t<l;){var o=2*(t+1)-1,a=A[o],c=o+1,v=A[c];if(0>ol(a,n))c<r&&0>ol(v,a)?(A[t]=v,A[c]=n,t=c):(A[t]=a,A[o]=n,t=o);else if(c<r&&0>ol(v,n))A[t]=v,A[c]=n,t=c;else break A}}return e}function ol(A,e){var n=A.sortIndex-e.sortIndex;return n!==0?n:A.id-e.id}if(typeof performance==="object"&&typeof performance.now==="function")fo=performance,Hv.unstable_now=function(){return fo.now()};else il=Date,ao=il.now(),Hv.unstable_now=function(){return il.now()-ao};var fo,il,ao,oe=[],ke=[],Cv=1,HA=null,yA=3,cl=!1,on=!1,qt=!1,Ga=typeof setTimeout==="function"?setTimeout:null,Ja=typeof clearTimeout==="function"?clearTimeout:null,Fa=typeof setImmediate<"u"?setImmediate:null;typeof navigator<"u"&&navigator.scheduling!==void 0&&navigator.scheduling.isInputPending!==void 0&&navigator.scheduling.isInputPending.bind(navigator.scheduling);function po(A){for(var e=IA(ke);e!==null;){if(e.callback===null)pl(ke);else if(e.startTime<=A)pl(ke),e.sortIndex=e.expirationTime,io(oe,e);else break;e=IA(ke)}}function vo(A){if(qt=!1,po(A),!on)if(IA(oe)!==null)on=!0,so(yo);else{var e=IA(ke);e!==null&&ho(vo,e.startTime-A)}}function yo(A,e){on=!1,qt&&(qt=!1,Ja(Ut),Ut=-1),cl=!0;var n=yA;try{po(e);for(HA=IA(oe);HA!==null&&(!(HA.expirationTime>e)||A&&!Qa());){var t=HA.callback;if(typeof t==="function"){HA.callback=null,yA=HA.priorityLevel;var r=t(HA.expirationTime<=e);e=Hv.unstable_now(),typeof r==="function"?HA.callback=r:HA===IA(oe)&&pl(oe),po(e)}else pl(oe);HA=IA(oe)}if(HA!==null)var l=!0;else{var o=IA(ke);o!==null&&ho(vo,o.startTime-e),l=!1}return l}finally{HA=null,yA=n,cl=!1}}var dl=!1,fl=null,Ut=-1,Ma=5,Da=-1;function Qa(){return Hv.unstable_now()-Da<Ma?!1:!0}function oo(){if(fl!==null){var A=Hv.unstable_now();Da=A;var e=!0;try{e=fl(!0,A)}finally{e?gt():(dl=!1,fl=null)}}else dl=!1}var gt;if(typeof Fa==="function")gt=function(){Fa(oo)};else if(typeof MessageChannel<"u")al=new MessageChannel,co=al.port2,al.port1.onmessage=oo,gt=function(){co.postMessage(null)};else gt=function(){Ga(oo,0)};var al,co;function so(A){fl=A,dl||(dl=!0,gt())}function ho(A,e){Ut=Ga(function(){A(Hv.unstable_now())},e)}Hv.unstable_IdlePriority=5;Hv.unstable_ImmediatePriority=1;Hv.unstable_LowPriority=4;Hv.unstable_NormalPriority=3;Hv.unstable_Profiling=null;Hv.unstable_UserBlockingPriority=2;Hv.unstable_cancelCallback=function(A){A.callback=null};Hv.unstable_continueExecution=function(){on||cl||(on=!0,so(yo))};Hv.unstable_forceFrameRate=function(A){0>A||125<A?console.error("forceFrameRate takes a positive int between 0 and 125, forcing frame rates higher than 125 fps is not supported"):Ma=0<A?Math.floor(1000/A):5};Hv.unstable_getCurrentPriorityLevel=function(){return yA};Hv.unstable_getFirstCallbackNode=function(){return IA(oe)};Hv.unstable_next=function(A){switch(yA){case 1:case 2:case 3:var e=3;break;default:e=yA}var n=yA;yA=e;try{return A()}finally{yA=n}};Hv.unstable_pauseExecution=function(){};Hv.unstable_requestPaint=function(){};Hv.unstable_runWithPriority=function(A,e){switch(A){case 1:case 2:case 3:case 4:case 5:break;default:A=3}var n=yA;yA=A;try{return e()}finally{yA=n}};Hv.unstable_scheduleCallback=function(A,e,n){var t=Hv.unstable_now();switch(typeof n==="object"&&n!==null?(n=n.delay,n=typeof n==="number"&&0<n?t+n:t):n=t,A){case 1:var r=-1;break;case 2:r=250;break;case 5:r=1073741823;break;case 4:r=1e4;break;default:r=5000}return r=n+r,A={id:Cv++,callback:e,priorityLevel:A,startTime:n,expirationTime:r,sortIndex:-1},n>t?(A.sortIndex=n,io(ke,A),IA(oe)===null&&A===IA(ke)&&(qt?(Ja(Ut),Ut=-1):qt=!0,ho(vo,n-t))):(A.sortIndex=r,io(oe,A),on||cl||(on=!0,so(yo))),A};Hv.unstable_shouldYield=Qa;Hv.unstable_wrapCallback=function(A){var e=yA;return function(){var n=yA;yA=e;try{return A.apply(this,arguments)}finally{yA=n}}}});var Nf={};C0(Nf,{version:()=>u1,unstable_renderSubtreeIntoContainer:()=>l1,unstable_batchedUpdates:()=>r1,unmountComponentAtNode:()=>t1,render:()=>n1,hydrateRoot:()=>e1,hydrate:()=>A1,flushSync:()=>jd,findDOMNode:()=>$d,createRoot:()=>bd,createPortal:()=>xd,__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED:()=>_d});function X(A){for(var e="https://reactjs.org/docs/error-decoder.html?invariant="+A,n=1;n<arguments.length;n++)e+="&args[]="+encodeURIComponent(arguments[n]);return"Minified React error #"+A+"; visit "+e+" for the full message or use the non-minified dev environment for full errors and additional helpful warnings."}function wn(A,e){tt(A,e),tt(A+"Capture",e)}function tt(A,e){er[A]=e;for(A=0;A<e.length;A++)$p.add(e[A])}function ty(A){if(Zo.call(Ia,A))return!0;if(Zo.call(Ba,A))return!1;if(ny.test(A))return Ia[A]=!0;return Ba[A]=!0,!1}function ry(A,e,n,t){if(n!==null&&n.type===0)return!1;switch(typeof e){case"function":case"symbol":return!0;case"boolean":if(t)return!1;if(n!==null)return!n.acceptsBooleans;return A=A.toLowerCase().slice(0,5),A!=="data-"&&A!=="aria-";default:return!1}}function ly(A,e,n,t){if(e===null||typeof e>"u"||ry(A,e,n,t))return!0;if(t)return!1;if(n!==null)switch(n.type){case 3:return!e;case 4:return e===!1;case 5:return isNaN(e);case 6:return isNaN(e)||1>e}return!1}function XA(A,e,n,t,r,l,o){this.acceptsBooleans=e===2||e===3||e===4,this.attributeName=t,this.attributeNamespace=r,this.mustUseProperty=n,this.propertyName=A,this.type=e,this.sanitizeURL=l,this.removeEmptyString=o}function Ki(A){return A[1].toUpperCase()}function Ri(A,e,n,t){var r=vA.hasOwnProperty(e)?vA[e]:null;if(r!==null?r.type!==0:t||!(2<e.length)||e[0]!=="o"&&e[0]!=="O"||e[1]!=="n"&&e[1]!=="N")ly(e,n,r,t)&&(n=null),t||r===null?ty(e)&&(n===null?A.removeAttribute(e):A.setAttribute(e,""+n)):r.mustUseProperty?A[r.propertyName]=n===null?r.type===3?!1:"":n:(e=r.attributeName,t=r.attributeNamespace,n===null?A.removeAttribute(e):(r=r.type,n=r===3||r===4&&n===!0?"":""+n,t?A.setAttributeNS(t,e,n):A.setAttribute(e,n)))}function Wt(A){if(A===null||typeof A!=="object")return null;return A=_a&&A[_a]||A["@@iterator"],typeof A==="function"?A:null}function Et(A){if(mo===void 0)try{throw Error()}catch(n){var e=n.stack.trim().match(/\n( *(at )?)/);mo=e&&e[1]||""}return`
